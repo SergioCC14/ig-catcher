@@ -1,8 +1,8 @@
-# frozen_string_literal: true
-
 require 'sinatra'
 require 'instagram'
 require 'dotenv'
+require 'open-uri'
+
 Dotenv.load
 
 enable :sessions
@@ -37,8 +37,16 @@ get '/user_recent_media' do
   rescue StandardError
     redirect Instagram.authorize_url(redirect_uri: CALLBACK_URL)
   end
+
   user = client.user
-  image = client.user_recent_media.first.images
+  image_url = client.user_recent_media.first.images.standard_resolution.url
+  save_img image_url
   html = "<h1>#{user.username}'s last pic</h1>"
-  html << "<img src='#{image.standard_resolution.url}'>"
+  html << "<img src='#{image_url}'>"
+end
+
+def save_img img
+  File.open('img/ig.png', 'wb') do |fo|
+    fo.write open(img).read
+  end
 end
